@@ -1,5 +1,7 @@
 ---
 name: Bug 反馈
+
+[English](./bug-report.en.md)
 about: '欢迎提交编译、安装、模型操作等方面的 bug '
 title: ''
 labels: ''

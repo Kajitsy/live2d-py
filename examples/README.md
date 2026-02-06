@@ -1,5 +1,7 @@
 # Live2D Python Examples 使用指南
 
+[English](./README.en.md)
+
 本文档将指导您如何将示例代码迁移到自己的工程中使用。
 
 ## 环境要求

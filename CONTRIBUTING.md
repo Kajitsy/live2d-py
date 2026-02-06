@@ -4,10 +4,13 @@
 
 # 开发说明
 
+[English](./CONTRIBUTING.en.md)
+
 本项目涉及：CMake、Cubism Native SDK、Python C Extension、OpenGL。
 
 * Cubism 相关部分可以查阅官方文档，这里推荐官方的 [Core api 文档]（可以下载 pdf），可以对整个 Live2D 绘制流程有一个整体把握。
 * [Python c extension]
+* 详细的 live2d.v2 渲染流程、算法和着色器实现请参考：[Live2D v2 渲染系统文档](./docs/LIVE2D_V2_RENDERER.md)
 
 ## 项目结构
 
