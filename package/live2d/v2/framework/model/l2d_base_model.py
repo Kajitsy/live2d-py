@@ -37,12 +37,12 @@ class L2DBaseModel:
     def getModelMatrix(self):
         return self.modelMatrix
 
-    def setAlpha(self, a):
-        if a > 0.999:
-            a = 1
-        if a < 0.001:
-            a = 0
-        self.alpha = a
+    def setAlpha(self, alpha):
+        if alpha > 0.999:
+            alpha = 1
+        if alpha < 0.001:
+            alpha = 0
+        self.alpha = alpha
 
     def getAlpha(self):
         return self.alpha
@@ -50,23 +50,23 @@ class L2DBaseModel:
     def isInitialized(self):
         return self.initialized
 
-    def setInitialized(self, v):
-        self.initialized = v
+    def setInitialized(self, value):
+        self.initialized = value
 
     def isUpdating(self):
         return self.updating
 
-    def setUpdating(self, v):
-        self.updating = v
+    def setUpdating(self, value):
+        self.updating = value
 
     def getLive2DModel(self):
         return self.live2DModel
 
-    def setLipSync(self, v):
-        self.lipSync = v
+    def setLipSync(self, value):
+        self.lipSync = value
 
-    def setLipSyncValue(self, v):
-        self.lipSyncValue = v
+    def setLipSyncValue(self, value):
+        self.lipSyncValue = value
 
     def setAccel(self, x, y, z):
         self.accelX = x

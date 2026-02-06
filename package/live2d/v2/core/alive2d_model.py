@@ -1,4 +1,4 @@
-﻿from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Union
 
 from .DEF import LIVE2D_FORMAT_VERSION_AVAILABLE, LIVE2D_FORMAT_VERSION_V2_8_TEX_OPTION
@@ -40,11 +40,11 @@ class ALive2DModel(ABC):
 
         return self.modelImpl.getCanvasHeight()
 
-    def getParamFloat(self, x):
-        if not isinstance(x, int):
-            x = self.modelContext.getParamIndex(Id.getID(x))
+    def getParamFloat(self, paramId):
+        if not isinstance(paramId, int):
+            paramId = self.modelContext.getParamIndex(Id.getID(paramId))
 
-        return self.modelContext.getParamFloat(x)
+        return self.modelContext.getParamFloat(paramId)
 
     def setParamFloat(self, x: Union[int, str], value: float, weight: float = 1):
         if not isinstance(x, int):
@@ -92,11 +92,11 @@ class ALive2DModel(ABC):
 
         self.modelContext.setPartsOpacity(index, opacity)
 
-    def getPartsDataIndex(self, aH):
-        if not (isinstance(aH, Id)):
-            aH = Id.getID(aH)
+    def getPartsDataIndex(self, part_id):
+        if not (isinstance(part_id, Id)):
+            part_id = Id.getID(part_id)
 
-        return self.modelContext.getPartsDataIndex(aH)
+        return self.modelContext.getPartsDataIndex(part_id)
 
     def getPartsOpacity(self, partIndex):
         if not isinstance(partIndex, int):
@@ -116,24 +116,24 @@ class ALive2DModel(ABC):
             raise RuntimeError
         return self.modelContext.getDrawDataIndex(Id.getID(drawId))
 
-    def getDrawData(self, aH):
-        return self.modelContext.getDrawData(aH)
+    def getDrawData(self, index):
+        return self.modelContext.getDrawData(index)
 
-    def getTransformedPoints(self, aH):
-        aI = self.modelContext.getDrawContext(aH)
-        if isinstance(aI, MeshContext):
-            return aI.getTransformedPoints()
+    def getTransformedPoints(self, drawDataIndex):
+        drawContext = self.modelContext.getDrawContext(drawDataIndex)
+        if isinstance(drawContext, MeshContext):
+            return drawContext.getTransformedPoints()
 
         return None
 
-    def getIndexArray(self, aI):
-        if aI < 0 or aI >= len(self.modelContext.drawDataList):
+    def getIndexArray(self, drawDataIndex):
+        if drawDataIndex < 0 or drawDataIndex >= len(self.modelContext.drawDataList):
             return None
 
-        aH = self.modelContext.drawDataList[aI]
-        if aH is not None and aH.getType() == IDrawData.TYPE_MESH:
-            if isinstance(aH, Mesh):
-                return aH.getIndexArray()
+        drawData = self.modelContext.drawDataList[drawDataIndex]
+        if drawData is not None and drawData.getType() == IDrawData.TYPE_MESH:
+            if isinstance(drawData, Mesh):
+                return drawData.getIndexArray()
 
         return None
 
@@ -158,14 +158,14 @@ class ALive2DModel(ABC):
             es = "Unsupported version %d\n" % version
             raise RuntimeError(es)
 
-        aL = br.readObject()
+        modelImpl = br.readObject()
         if version >= LIVE2D_FORMAT_VERSION_V2_8_TEX_OPTION:
-            aH = br.readUShort()
-            aT = br.readUShort()
-            if aH != -30584 or aT != -30584:
+            checksum1 = br.readUShort()
+            checksum2 = br.readUShort()
+            if checksum1 != -30584 or checksum2 != -30584:
                 raise RuntimeError("Invalid load EOF")
 
-        model.setModelImpl(aL)
+        model.setModelImpl(modelImpl)
         model_context = model.getModelContext()
         model_context.setDrawParam(model.getDrawParam())
         model_context.init()

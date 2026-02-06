@@ -11,14 +11,14 @@ class AMotion(ABC):
         self.fadeOutMSec = 1000
         self.weight = 1
 
-    def setFadeIn(self, aH):
-        self.fadeInMSec = aH
+    def setFadeIn(self, fade_in_ms):
+        self.fadeInMSec = fade_in_ms
 
-    def setFadeOut(self, aH):
-        self.fadeOutMSec = aH
+    def setFadeOut(self, fade_out_ms):
+        self.fadeOutMSec = fade_out_ms
 
-    def setWeight(self, aH):
-        self.weight = aH
+    def setWeight(self, weight):
+        self.weight = weight
 
     def getFadeOut(self):
         return self.fadeOutMSec
@@ -32,57 +32,57 @@ class AMotion(ABC):
     def getLoopDurationMSec(self):
         return -1
 
-    def updateParam(self, aJ, aN):
-        if not aN.available or aN.finished:
+    def updateParam(self, model, userTimeSeconds):
+        if not userTimeSeconds.available or userTimeSeconds.finished:
             return
 
-        aL = UtSystem.getUserTimeMSec()
-        if aN.startTimeMSec < 0:
-            aN.startTimeMSec = aL
-            aN.fadeInStartTimeMSec = aL
-            aM = self.getDurationMSec()
-            if aN.endTimeMSec < 0:
-                aN.endTimeMSec = -1 if (aM <= 0) else aN.startTimeMSec + aM
+        currentTime = UtSystem.getUserTimeMSec()
+        if userTimeSeconds.startTimeMSec < 0:
+            userTimeSeconds.startTimeMSec = currentTime
+            userTimeSeconds.fadeInStartTimeMSec = currentTime
+            duration = self.getDurationMSec()
+            if userTimeSeconds.endTimeMSec < 0:
+                userTimeSeconds.endTimeMSec = -1 if (duration <= 0) else userTimeSeconds.startTimeMSec + duration
 
-        aI = self.weight
-        aH = 1 if (self.fadeInMSec == 0) else UtMotion.getEasingSine(((aL - aN.fadeInStartTimeMSec) / self.fadeInMSec))
-        aK = 1 if (self.fadeOutMSec == 0 or aN.endTimeMSec < 0) else UtMotion.getEasingSine(((aN.endTimeMSec - aL) / self.fadeOutMSec))
-        aI = aI * aH * aK
-        if not (0 <= aI <= 1):
+        weight = self.weight
+        fadeIn = 1 if (self.fadeInMSec == 0) else UtMotion.getEasingSine(((currentTime - userTimeSeconds.fadeInStartTimeMSec) / self.fadeInMSec))
+        fadeOut = 1 if (self.fadeOutMSec == 0 or userTimeSeconds.endTimeMSec < 0) else UtMotion.getEasingSine(((userTimeSeconds.endTimeMSec - currentTime) / self.fadeOutMSec))
+        weight = weight * fadeIn * fadeOut
+        if not (0 <= weight <= 1):
             print("### assert!! ### ")
 
-        self.updateParamExe(aJ, aL, aI, aN)
-        if 0 < aN.endTimeMSec < aL:
-            aN.finished = True
+        self.updateParamExe(model, currentTime, weight, userTimeSeconds)
+        if 0 < userTimeSeconds.endTimeMSec < currentTime:
+            userTimeSeconds.finished = True
 
     @abstractmethod
-    def updateParamExe(self, aH, aI, aJ, aK):
+    def updateParamExe(self, model, currentTime, weight, userTimeSeconds):
         pass
 
     @staticmethod
     def getEasing(t, totalTime, accelerateTime):
-        aQ = t / totalTime
-        a1 = accelerateTime / totalTime
-        aU = a1
-        aZ = 1 / 3
-        aR = 2 / 3
-        a0 = 1 - (1 - a1) * (1 - a1)
-        a2 = 1 - (1 - aU) * (1 - aU)
-        aM = 0
-        aL = ((1 - a1) * aZ) * a0 + (aU * aR + (1 - aU) * aZ) * (1 - a0)
-        aK = (aU + (1 - aU) * aR) * a2 + (a1 * aZ + (1 - a1) * aR) * (1 - a2)
-        aJ = 1
-        aY = aJ - 3 * aK + 3 * aL - aM
-        aX = 3 * aK - 6 * aL + 3 * aM
-        aW = 3 * aL - 3 * aM
-        aV = aM
-        if aQ <= 0:
+        tNormalized = t / totalTime
+        accelRatio = accelerateTime / totalTime
+        u = accelRatio
+        oneThird = 1 / 3
+        twoThird = 2 / 3
+        p0 = 1 - (1 - accelRatio) * (1 - accelRatio)
+        p2 = 1 - (1 - u) * (1 - u)
+        p3 = 0
+        b0 = ((1 - accelRatio) * oneThird) * p0 + (u * twoThird + (1 - u) * oneThird) * (1 - p0)
+        b1 = (u + (1 - u) * twoThird) * p2 + (accelRatio * oneThird + (1 - accelRatio) * twoThird) * (1 - p2)
+        b2 = 1
+        a = b2 - 3 * b1 + 3 * b0 - p3
+        b = 3 * b1 - 6 * b0 + 3 * p3
+        c = 3 * b0 - 3 * p3
+        d = p3
+        if tNormalized <= 0:
             return 0
-        elif aQ >= 1:
+        elif tNormalized >= 1:
             return 1
 
-        aS = aQ
-        aI = aS * aS
-        aH = aS * aI
-        aT = aY * aH + aX * aI + aW * aS + aV
-        return aT
+        time = tNormalized
+        timeSquared = time * time
+        timeCubed = time * timeSquared
+        result = a * timeCubed + b * timeSquared + c * time + d
+        return result

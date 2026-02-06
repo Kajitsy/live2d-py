@@ -6,7 +6,7 @@ class MotionQueueManager:
     def __init__(self):
         self.motions = []
 
-    def startMotion(self, aJ, aI):
+    def startMotion(self, motion, autoPriority):
         count = len(self.motions)
         for i in range(0, count, 1):
             ent = self.motions[i]
@@ -15,17 +15,17 @@ class MotionQueueManager:
 
             ent.startFadeOut(ent.motion.getFadeOut())
 
-        if aJ is None:
+        if motion is None:
             return -1
 
         ent = MotionQueueEntry()
-        ent.motion = aJ
+        ent.motion = motion
         self.motions.append(ent)
-        nr = ent.mqNo
+        motionNo = ent.mqNo
 
-        return nr
+        return motionNo
 
-    def updateParam(self, aJ):
+    def updateParam(self, model):
         updated = False
         i = 0
         size = len(self.motions)
@@ -36,13 +36,13 @@ class MotionQueueManager:
                 size -= 1
                 continue
 
-            mtn = ent.motion
-            if mtn is None:
+            motion = ent.motion
+            if motion is None:
                 self.motions.pop(i)
                 size -= 1
                 continue
 
-            mtn.updateParam(aJ, ent)
+            motion.updateParam(model, ent)
             updated = True
             if ent.isFinished():
                 ent = self.motions.pop(i)
@@ -54,14 +54,14 @@ class MotionQueueManager:
 
         return updated
 
-    def isFinished(self, nr=None):
-        if nr is not None:  # is the motion finished?
+    def isFinished(self, motionNo=None):
+        if motionNo is not None:  # is the motion finished?
             for i in range(0, len(self.motions), 1):
                 ent = self.motions[i]
                 if ent is None:
                     continue
 
-                if ent.mqNo == nr and not ent.isFinished():
+                if ent.mqNo == motionNo and not ent.isFinished():
                     return False
 
             return True
@@ -75,8 +75,8 @@ class MotionQueueManager:
                     size -= 1
                     continue
 
-                aH = ent.motion
-                if aH is None:
+                motion = ent.motion
+                if motion is None:
                     self.motions.pop(i)
                     size -= 1
                     continue

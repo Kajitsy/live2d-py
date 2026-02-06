@@ -66,11 +66,11 @@ class Deformer(ISerializable):
     def getType(self) -> int:
         pass
 
-    def setTargetId(self, aH):
-        self.targetId = aH
+    def setTargetId(self, target_id):
+        self.targetId = target_id
 
-    def setId(self, aH):
-        self.id = aH
+    def setId(self, id_val):
+        self.id = id_val
 
     def getTargetId(self) -> Id:
         return self.targetId

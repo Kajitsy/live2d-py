@@ -10,6 +10,6 @@ class PhysicsTarget(IPhysicsParam):
 
     def update(self, aI, aH):
         if self.YP_ == TARGET_FROM_ANGLE:
-            aI.setParamFloat(self.paramId, self.scale * aH._5r(), self.weight)
+            aI.setParamFloat(self.paramId, self.scale * aH.getLastAngle(), self.weight)
         elif self.YP_ == TARGET_FROM_ANGLE_V:
-            aI.setParamFloat(self.paramId, self.scale * aH.Cs_(), self.weight)
+            aI.setParamFloat(self.paramId, self.scale * aH.getLastAngleVelocity(), self.weight)

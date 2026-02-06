@@ -35,8 +35,8 @@ class Mesh(IDrawData):
         self.instanceNo = Mesh.INSTANCE_COUNT
         Mesh.INSTANCE_COUNT += 1
 
-    def setTextureNo(self, aH):
-        self.textureNo = aH
+    def setTextureNo(self, texture_no):
+        self.textureNo = texture_no
 
     def getTextureNo(self):
         return self.textureNo
@@ -60,8 +60,8 @@ class Mesh(IDrawData):
         self.polygonCount = br.readInt32()
         obj = br.readObject()
         self.indexArray = Int16Array(self.polygonCount * 3)
-        for aJ in range(self.polygonCount * 3 - 1, 0 - 1, -1):
-            self.indexArray[aJ] = obj[aJ]
+        for i in range(self.polygonCount * 3 - 1, 0 - 1, -1):
+            self.indexArray[i] = obj[i]
 
         self.pivotPoints = br.readObject()
         self.uvs = br.readObject()
@@ -82,86 +82,86 @@ class Mesh(IDrawData):
         else:
             self.optionFlag = 0
 
-    def init(self, aL):
+    def init(self, modelContext):
         ctx = MeshContext(self)
-        aI = self.pointCount * VERTEX_STEP
-        aH = self.needTransform()
+        vertexCount = self.pointCount * VERTEX_STEP
+        needTransform = self.needTransform()
         if ctx.interpolatedPoints is not None:
             ctx.interpolatedPoints = None
 
-        ctx.interpolatedPoints = Float32Array(aI)
+        ctx.interpolatedPoints = Float32Array(vertexCount)
         if ctx.transformedPoints is not None:
             ctx.transformedPoints = None
 
-        ctx.transformedPoints = Float32Array(aI) if aH else None
-        aM = VERTEX_TYPE
+        ctx.transformedPoints = Float32Array(vertexCount) if needTransform else None
+        vertexType = VERTEX_TYPE
 
-        if aM == VERTEX_TYPE_OFFSET0_STEP2:
+        if vertexType == VERTEX_TYPE_OFFSET0_STEP2:
             if REVERSE_TEXTURE_T:
-                for aJ in range(self.pointCount - 1, 0 - 1, -1):
-                    aO = aJ << 1
-                    self.uvs[aO + 1] = 1 - self.uvs[aO + 1]
-        elif aM == VERTEX_TYPE_OFFSET2_STEP5:
-            for aJ in range(self.pointCount - 1, 0 - 1, -1):
-                aO = aJ << 1
-                aK = aJ * VERTEX_STEP
-                aQ = self.uvs[aO]
-                aP = self.uvs[aO + 1]
-                ctx.interpolatedPoints[aK] = aQ
-                ctx.interpolatedPoints[aK + 1] = aP
-                ctx.interpolatedPoints[aK + 4] = 0
-                if aH:
-                    ctx.transformedPoints[aK] = aQ
-                    ctx.transformedPoints[aK + 1] = aP
-                    ctx.transformedPoints[aK + 4] = 0
+                for i in range(self.pointCount - 1, 0 - 1, -1):
+                    uvOffset = i << 1
+                    self.uvs[uvOffset + 1] = 1 - self.uvs[uvOffset + 1]
+        elif vertexType == VERTEX_TYPE_OFFSET2_STEP5:
+            for i in range(self.pointCount - 1, 0 - 1, -1):
+                uvOffset = i << 1
+                vertexOffset = i * VERTEX_STEP
+                uvX = self.uvs[uvOffset]
+                uvY = self.uvs[uvOffset + 1]
+                ctx.interpolatedPoints[vertexOffset] = uvX
+                ctx.interpolatedPoints[vertexOffset + 1] = uvY
+                ctx.interpolatedPoints[vertexOffset + 4] = 0
+                if needTransform:
+                    ctx.transformedPoints[vertexOffset] = uvX
+                    ctx.transformedPoints[vertexOffset + 1] = uvY
+                    ctx.transformedPoints[vertexOffset + 4] = 0
 
         return ctx
 
-    def setupInterpolate(self, aJ, aH):
-        aK = aH
-        if not (self == aK.getDrawData()):
+    def setupInterpolate(self, modelContext, meshContext):
+        ctx = meshContext
+        if not (self == ctx.getDrawData()):
             print("### assert!! ### ")
 
-        if not self.pivotMgr.checkParamUpdated(aJ):
+        if not self.pivotMgr.checkParamUpdated(modelContext):
             return
 
-        super().setupInterpolate(aJ, aK)
-        if aK.paramOutside[0]:
+        super().setupInterpolate(modelContext, ctx)
+        if ctx.paramOutside[0]:
             return
 
-        aI = Mesh.paramOutside
-        aI[0] = False
-        UtInterpolate.interpolatePoints(aJ, self.pivotMgr, aI, self.pointCount, self.pivotPoints, aK.interpolatedPoints,
+        paramOutside = Mesh.paramOutside
+        paramOutside[0] = False
+        UtInterpolate.interpolatePoints(modelContext, self.pivotMgr, paramOutside, self.pointCount, self.pivotPoints, ctx.interpolatedPoints,
                                         VERTEX_OFFSET, VERTEX_STEP)
 
-    def setupTransform(self, mc, dc=None):
-        if not (self == dc.getDrawData()):
+    def setupTransform(self, modelContext, drawContext=None):
+        if not (self == drawContext.getDrawData()):
             raise RuntimeError("context not match")
 
-        aL = False
-        if dc.paramOutside[0]:
-            aL = True
+        paramOutside = False
+        if drawContext.paramOutside[0]:
+            paramOutside = True
 
-        if not aL:
-            super().setupTransform(mc)
+        if not paramOutside:
+            super().setupTransform(modelContext)
             if self.needTransform():
                 target_id = self.getTargetId()
-                if dc.tmpDeformerIndex == IDrawData.DEFORMER_INDEX_NOT_INIT:
-                    dc.tmpDeformerIndex = mc.getDeformerIndex(target_id)
+                if drawContext.tmpDeformerIndex == IDrawData.DEFORMER_INDEX_NOT_INIT:
+                    drawContext.tmpDeformerIndex = modelContext.getDeformerIndex(target_id)
 
-                if dc.tmpDeformerIndex < 0:
+                if drawContext.tmpDeformerIndex < 0:
                     print(f"deformer not found: {target_id}")
                 else:
-                    d = mc.getDeformer(dc.tmpDeformerIndex)
-                    dctx = mc.getDeformerContext(dc.tmpDeformerIndex)
-                    if d is not None and not dctx.isOutsideParam():
-                        d.transformPoints(mc, dctx, dc.interpolatedPoints, dc.transformedPoints, self.pointCount,
+                    deformer = modelContext.getDeformer(drawContext.tmpDeformerIndex)
+                    deformerContext = modelContext.getDeformerContext(drawContext.tmpDeformerIndex)
+                    if deformer is not None and not deformerContext.isOutsideParam():
+                        deformer.transformPoints(modelContext, deformerContext, drawContext.interpolatedPoints, drawContext.transformedPoints, self.pointCount,
                                           VERTEX_OFFSET, VERTEX_STEP)
-                        dc.available = True
+                        drawContext.available = True
                     else:
-                        dc.available = False
+                        drawContext.available = False
 
-                    dc.baseOpacity = dctx.getTotalOpacity()
+                    drawContext.baseOpacity = deformerContext.getTotalOpacity()
 
     def draw(self, dp, mctx: 'ModelContext', dctx: 'MeshContext'):
         if not (self == dctx.getDrawData()):
