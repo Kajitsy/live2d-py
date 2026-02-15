@@ -1,4 +1,4 @@
-﻿import math
+import math
 from typing import TYPE_CHECKING, Optional, List
 
 from .deformer import Deformer
@@ -46,340 +46,348 @@ class RotationDeformer(Deformer):
 
         return rctx
 
-    def setupInterpolate(self, mctx: 'ModelContext', rctx: 'RotationContext'):
-        if not (self == rctx.getDeformer()):
+    def setupInterpolate(self, modelContext: 'ModelContext', rotationContext: 'RotationContext'):
+        if not (self == rotationContext.getDeformer()):
             raise RuntimeError("context not match")
 
-        if not self.pivotManager.checkParamUpdated(mctx):
+        if not self.pivotManager.checkParamUpdated(modelContext):
             return
 
         success = RotationDeformer.paramOutside
         success[0] = False
-        a2 = self.pivotManager.calcPivotValues(mctx, success)
-        rctx.setOutsideParam(success[0])
-        self.interpolateOpacity(mctx, self.pivotManager, rctx, success)
-        a3 = mctx.getTempPivotTableIndices()
-        ba = mctx.getTempT()
-        self.pivotManager.calcPivotIndices(a3, ba, a2)
-        if a2 <= 0:
-            bn_3 = self.affines[a3[0]]
-            rctx.interpolatedAffine.init(bn_3)
+        pivotCount = self.pivotManager.calcPivotValues(modelContext, success)
+        rotationContext.setOutsideParam(success[0])
+        self.interpolateOpacity(modelContext, self.pivotManager, rotationContext, success)
+        pivotIndices = modelContext.getTempPivotTableIndices()
+        pivotValues = modelContext.getTempT()
+        self.pivotManager.calcPivotIndices(pivotIndices, pivotValues, pivotCount)
+        if pivotCount <= 0:
+            affine = self.affines[pivotIndices[0]]
+            rotationContext.interpolatedAffine.init(affine)
         else:
-            if a2 == 1:
-                bn_1 = self.affines[a3[0]]
-                bl = self.affines[a3[1]]
-                a9 = ba[0]
-                rctx.interpolatedAffine.originX = bn_1.originX + (bl.originX - bn_1.originX) * a9
-                rctx.interpolatedAffine.originY = bn_1.originY + (bl.originY - bn_1.originY) * a9
-                rctx.interpolatedAffine.scaleX = bn_1.scaleX + (bl.scaleX - bn_1.scaleX) * a9
-                rctx.interpolatedAffine.scaleY = bn_1.scaleY + (bl.scaleY - bn_1.scaleY) * a9
-                rctx.interpolatedAffine.rotationDeg = bn_1.rotationDeg + (
-                        bl.rotationDeg - bn_1.rotationDeg) * a9
+            if pivotCount == 1:
+                affine1 = self.affines[pivotIndices[0]]
+                affine2 = self.affines[pivotIndices[1]]
+                weight = pivotValues[0]
+                rotationContext.interpolatedAffine.originX = affine1.originX + (affine2.originX - affine1.originX) * weight
+                rotationContext.interpolatedAffine.originY = affine1.originY + (affine2.originY - affine1.originY) * weight
+                rotationContext.interpolatedAffine.scaleX = affine1.scaleX + (affine2.scaleX - affine1.scaleX) * weight
+                rotationContext.interpolatedAffine.scaleY = affine1.scaleY + (affine2.scaleY - affine1.scaleY) * weight
+                rotationContext.interpolatedAffine.rotationDeg = affine1.rotationDeg + (
+                        affine2.rotationDeg - affine1.rotationDeg) * weight
             else:
-                if a2 == 2:
-                    bn_1 = self.affines[a3[0]]
-                    bl = self.affines[a3[1]]
-                    a1 = self.affines[a3[2]]
-                    a0 = self.affines[a3[3]]
-                    a9 = ba[0]
-                    a8 = ba[1]
-                    bC = bn_1.originX + (bl.originX - bn_1.originX) * a9
-                    bB = a1.originX + (a0.originX - a1.originX) * a9
-                    rctx.interpolatedAffine.originX = bC + (bB - bC) * a8
-                    bC = bn_1.originY + (bl.originY - bn_1.originY) * a9
-                    bB = a1.originY + (a0.originY - a1.originY) * a9
-                    rctx.interpolatedAffine.originY = bC + (bB - bC) * a8
-                    bC = bn_1.scaleX + (bl.scaleX - bn_1.scaleX) * a9
-                    bB = a1.scaleX + (a0.scaleX - a1.scaleX) * a9
-                    rctx.interpolatedAffine.scaleX = bC + (bB - bC) * a8
-                    bC = bn_1.scaleY + (bl.scaleY - bn_1.scaleY) * a9
-                    bB = a1.scaleY + (a0.scaleY - a1.scaleY) * a9
-                    rctx.interpolatedAffine.scaleY = bC + (bB - bC) * a8
-                    bC = bn_1.rotationDeg + (bl.rotationDeg - bn_1.rotationDeg) * a9
-                    bB = a1.rotationDeg + (a0.rotationDeg - a1.rotationDeg) * a9
-                    rctx.interpolatedAffine.rotationDeg = bC + (bB - bC) * a8
+                if pivotCount == 2:
+                    affine1 = self.affines[pivotIndices[0]]
+                    affine2 = self.affines[pivotIndices[1]]
+                    affine3 = self.affines[pivotIndices[2]]
+                    affine4 = self.affines[pivotIndices[3]]
+                    weight1 = pivotValues[0]
+                    weight2 = pivotValues[1]
+                    interpolated1X = affine1.originX + (affine2.originX - affine1.originX) * weight1
+                    interpolated2X = affine3.originX + (affine4.originX - affine3.originX) * weight1
+                    rotationContext.interpolatedAffine.originX = interpolated1X + (interpolated2X - interpolated1X) * weight2
+                    interpolated1Y = affine1.originY + (affine2.originY - affine1.originY) * weight1
+                    interpolated2Y = affine3.originY + (affine4.originY - affine3.originY) * weight1
+                    rotationContext.interpolatedAffine.originY = interpolated1Y + (interpolated2Y - interpolated1Y) * weight2
+                    interpolated1ScaleX = affine1.scaleX + (affine2.scaleX - affine1.scaleX) * weight1
+                    interpolated2ScaleX = affine3.scaleX + (affine4.scaleX - affine3.scaleX) * weight1
+                    rotationContext.interpolatedAffine.scaleX = interpolated1ScaleX + (interpolated2ScaleX - interpolated1ScaleX) * weight2
+                    interpolated1ScaleY = affine1.scaleY + (affine2.scaleY - affine1.scaleY) * weight1
+                    interpolated2ScaleY = affine3.scaleY + (affine4.scaleY - affine3.scaleY) * weight1
+                    rotationContext.interpolatedAffine.scaleY = interpolated1ScaleY + (interpolated2ScaleY - interpolated1ScaleY) * weight2
+                    interpolated1Rotation = affine1.rotationDeg + (affine2.rotationDeg - affine1.rotationDeg) * weight1
+                    interpolated2Rotation = affine3.rotationDeg + (affine4.rotationDeg - affine3.rotationDeg) * weight1
+                    rotationContext.interpolatedAffine.rotationDeg = interpolated1Rotation + (interpolated2Rotation - interpolated1Rotation) * weight2
                 else:
-                    if a2 == 3:
-                        aP = self.affines[a3[0]]
-                        aO = self.affines[a3[1]]
-                        bu = self.affines[a3[2]]
-                        bs = self.affines[a3[3]]
-                        aK = self.affines[a3[4]]
-                        aJ = self.affines[a3[5]]
-                        bj = self.affines[a3[6]]
-                        bi = self.affines[a3[7]]
-                        a9 = ba[0]
-                        a8 = ba[1]
-                        a6 = ba[2]
-                        bC = aP.originX + (aO.originX - aP.originX) * a9
-                        bB = bu.originX + (bs.originX - bu.originX) * a9
-                        bz = aK.originX + (aJ.originX - aK.originX) * a9
-                        by = bj.originX + (bi.originX - bj.originX) * a9
-                        rctx.interpolatedAffine.originX = (1 - a6) * (bC + (bB - bC) * a8) + a6 * (
-                                bz + (by - bz) * a8)
-                        bC = aP.originY + (aO.originY - aP.originY) * a9
-                        bB = bu.originY + (bs.originY - bu.originY) * a9
-                        bz = aK.originY + (aJ.originY - aK.originY) * a9
-                        by = bj.originY + (bi.originY - bj.originY) * a9
-                        rctx.interpolatedAffine.originY = (1 - a6) * (bC + (bB - bC) * a8) + a6 * (
-                                bz + (by - bz) * a8)
-                        bC = aP.scaleX + (aO.scaleX - aP.scaleX) * a9
-                        bB = bu.scaleX + (bs.scaleX - bu.scaleX) * a9
-                        bz = aK.scaleX + (aJ.scaleX - aK.scaleX) * a9
-                        by = bj.scaleX + (bi.scaleX - bj.scaleX) * a9
-                        rctx.interpolatedAffine.scaleX = (1 - a6) * (bC + (bB - bC) * a8) + a6 * (
-                                bz + (by - bz) * a8)
-                        bC = aP.scaleY + (aO.scaleY - aP.scaleY) * a9
-                        bB = bu.scaleY + (bs.scaleY - bu.scaleY) * a9
-                        bz = aK.scaleY + (aJ.scaleY - aK.scaleY) * a9
-                        by = bj.scaleY + (bi.scaleY - bj.scaleY) * a9
-                        rctx.interpolatedAffine.scaleY = (1 - a6) * (bC + (bB - bC) * a8) + a6 * (
-                                bz + (by - bz) * a8)
-                        bC = aP.rotationDeg + (aO.rotationDeg - aP.rotationDeg) * a9
-                        bB = bu.rotationDeg + (bs.rotationDeg - bu.rotationDeg) * a9
-                        bz = aK.rotationDeg + (aJ.rotationDeg - aK.rotationDeg) * a9
-                        by = bj.rotationDeg + (bi.rotationDeg - bj.rotationDeg) * a9
-                        rctx.interpolatedAffine.rotationDeg = (1 - a6) * (bC + (bB - bC) * a8) + a6 * (
-                                bz + (by - bz) * a8)
+                    if pivotCount == 3:
+                        affine1 = self.affines[pivotIndices[0]]
+                        affine2 = self.affines[pivotIndices[1]]
+                        affine3 = self.affines[pivotIndices[2]]
+                        affine4 = self.affines[pivotIndices[3]]
+                        affine5 = self.affines[pivotIndices[4]]
+                        affine6 = self.affines[pivotIndices[5]]
+                        affine7 = self.affines[pivotIndices[6]]
+                        affine8 = self.affines[pivotIndices[7]]
+                        weight1 = pivotValues[0]
+                        weight2 = pivotValues[1]
+                        weight3 = pivotValues[2]
+                        interpolated1X = affine1.originX + (affine2.originX - affine1.originX) * weight1
+                        interpolated2X = affine3.originX + (affine4.originX - affine3.originX) * weight1
+                        interpolated3X = affine5.originX + (affine6.originX - affine5.originX) * weight1
+                        interpolated4X = affine7.originX + (affine8.originX - affine7.originX) * weight1
+                        interpolatedA = (1 - weight3) * (interpolated1X + (interpolated2X - interpolated1X) * weight2) + weight3 * (
+                                interpolated3X + (interpolated4X - interpolated3X) * weight2)
+                        rotationContext.interpolatedAffine.originX = interpolatedA
+                        interpolated1Y = affine1.originY + (affine2.originY - affine1.originY) * weight1
+                        interpolated2Y = affine3.originY + (affine4.originY - affine3.originY) * weight1
+                        interpolated3Y = affine5.originY + (affine6.originY - affine5.originY) * weight1
+                        interpolated4Y = affine7.originY + (affine8.originY - affine7.originY) * weight1
+                        interpolatedB = (1 - weight3) * (interpolated1Y + (interpolated2Y - interpolated1Y) * weight2) + weight3 * (
+                                interpolated3Y + (interpolated4Y - interpolated3Y) * weight2)
+                        rotationContext.interpolatedAffine.originY = interpolatedB
+                        interpolated1ScaleX = affine1.scaleX + (affine2.scaleX - affine1.scaleX) * weight1
+                        interpolated2ScaleX = affine3.scaleX + (affine4.scaleX - affine3.scaleX) * weight1
+                        interpolated3ScaleX = affine5.scaleX + (affine6.scaleX - affine5.scaleX) * weight1
+                        interpolated4ScaleX = affine7.scaleX + (affine8.scaleX - affine7.scaleX) * weight1
+                        interpolatedC = (1 - weight3) * (interpolated1ScaleX + (interpolated2ScaleX - interpolated1ScaleX) * weight2) + weight3 * (
+                                interpolated3ScaleX + (interpolated4ScaleX - interpolated3ScaleX) * weight2)
+                        rotationContext.interpolatedAffine.scaleX = interpolatedC
+                        interpolated1ScaleY = affine1.scaleY + (affine2.scaleY - affine1.scaleY) * weight1
+                        interpolated2ScaleY = affine3.scaleY + (affine4.scaleY - affine3.scaleY) * weight1
+                        interpolated3ScaleY = affine5.scaleY + (affine6.scaleY - affine5.scaleY) * weight1
+                        interpolated4ScaleY = affine7.scaleY + (affine8.scaleY - affine7.scaleY) * weight1
+                        interpolatedD = (1 - weight3) * (interpolated1ScaleY + (interpolated2ScaleY - interpolated1ScaleY) * weight2) + weight3 * (
+                                interpolated3ScaleY + (interpolated4ScaleY - interpolated3ScaleY) * weight2)
+                        rotationContext.interpolatedAffine.scaleY = interpolatedD
+                        interpolated1Rotation = affine1.rotationDeg + (affine2.rotationDeg - affine1.rotationDeg) * weight1
+                        interpolated2Rotation = affine3.rotationDeg + (affine4.rotationDeg - affine3.rotationDeg) * weight1
+                        interpolated3Rotation = affine5.rotationDeg + (affine6.rotationDeg - affine5.rotationDeg) * weight1
+                        interpolated4Rotation = affine7.rotationDeg + (affine8.rotationDeg - affine7.rotationDeg) * weight1
+                        interpolatedE = (1 - weight3) * (interpolated1Rotation + (interpolated2Rotation - interpolated1Rotation) * weight2) + weight3 * (
+                                interpolated3Rotation + (interpolated4Rotation - interpolated3Rotation) * weight2)
+                        rotationContext.interpolatedAffine.rotationDeg = interpolatedE
                     else:
-                        if a2 == 4:
-                            aT = self.affines[a3[0]]
-                            aS = self.affines[a3[1]]
-                            bE = self.affines[a3[2]]
-                            bD = self.affines[a3[3]]
-                            aN = self.affines[a3[4]]
-                            aM = self.affines[a3[5]]
-                            bp = self.affines[a3[6]]
-                            bo = self.affines[a3[7]]
-                            bh = self.affines[a3[8]]
-                            bg = self.affines[a3[9]]
-                            aY = self.affines[a3[10]]
-                            aW = self.affines[a3[11]]
-                            a7 = self.affines[a3[12]]
-                            a5 = self.affines[a3[13]]
-                            aR = self.affines[a3[14]]
-                            aQ = self.affines[a3[15]]
-                            a9 = ba[0]
-                            a8 = ba[1]
-                            a6 = ba[2]
-                            a4 = ba[3]
-                            bC = aT.originX + (aS.originX - aT.originX) * a9
-                            bB = bE.originX + (bD.originX - bE.originX) * a9
-                            bz = aN.originX + (aM.originX - aN.originX) * a9
-                            by = bp.originX + (bo.originX - bp.originX) * a9
-                            bv = bh.originX + (bg.originX - bh.originX) * a9
-                            bt = aY.originX + (aW.originX - aY.originX) * a9
-                            br = a7.originX + (a5.originX - a7.originX) * a9
-                            bq = aR.originX + (aQ.originX - aR.originX) * a9
-                            rctx.interpolatedAffine.originX = (1 - a4) * (
-                                    (1 - a6) * (bC + (bB - bC) * a8) + a6 * (bz + (by - bz) * a8)) + a4 * (
-                                                                      (1 - a6) * (
-                                                                      bv + (bt - bv) * a8) + a6 * (
-                                                                              br + (bq - br) * a8))
-                            bC = aT.originY + (aS.originY - aT.originY) * a9
-                            bB = bE.originY + (bD.originY - bE.originY) * a9
-                            bz = aN.originY + (aM.originY - aN.originY) * a9
-                            by = bp.originY + (bo.originY - bp.originY) * a9
-                            bv = bh.originY + (bg.originY - bh.originY) * a9
-                            bt = aY.originY + (aW.originY - aY.originY) * a9
-                            br = a7.originY + (a5.originY - a7.originY) * a9
-                            bq = aR.originY + (aQ.originY - aR.originY) * a9
-                            rctx.interpolatedAffine.originY = (1 - a4) * (
-                                    (1 - a6) * (bC + (bB - bC) * a8) + a6 * (bz + (by - bz) * a8)) + a4 * (
-                                                                      (1 - a6) * (
-                                                                      bv + (bt - bv) * a8) + a6 * (
-                                                                              br + (bq - br) * a8))
-                            bC = aT.scaleX + (aS.scaleX - aT.scaleX) * a9
-                            bB = bE.scaleX + (bD.scaleX - bE.scaleX) * a9
-                            bz = aN.scaleX + (aM.scaleX - aN.scaleX) * a9
-                            by = bp.scaleX + (bo.scaleX - bp.scaleX) * a9
-                            bv = bh.scaleX + (bg.scaleX - bh.scaleX) * a9
-                            bt = aY.scaleX + (aW.scaleX - aY.scaleX) * a9
-                            br = a7.scaleX + (a5.scaleX - a7.scaleX) * a9
-                            bq = aR.scaleX + (aQ.scaleX - aR.scaleX) * a9
-                            rctx.interpolatedAffine.scaleX = (1 - a4) * (
-                                    (1 - a6) * (bC + (bB - bC) * a8) + a6 * (bz + (by - bz) * a8)) + a4 * (
-                                                                     (1 - a6) * (
-                                                                     bv + (bt - bv) * a8) + a6 * (
-                                                                             br + (bq - br) * a8))
-                            bC = aT.scaleY + (aS.scaleY - aT.scaleY) * a9
-                            bB = bE.scaleY + (bD.scaleY - bE.scaleY) * a9
-                            bz = aN.scaleY + (aM.scaleY - aN.scaleY) * a9
-                            by = bp.scaleY + (bo.scaleY - bp.scaleY) * a9
-                            bv = bh.scaleY + (bg.scaleY - bh.scaleY) * a9
-                            bt = aY.scaleY + (aW.scaleY - aY.scaleY) * a9
-                            br = a7.scaleY + (a5.scaleY - a7.scaleY) * a9
-                            bq = aR.scaleY + (aQ.scaleY - aR.scaleY) * a9
-                            rctx.interpolatedAffine.scaleY = (1 - a4) * (
-                                    (1 - a6) * (bC + (bB - bC) * a8) + a6 * (bz + (by - bz) * a8)) + a4 * (
-                                                                     (1 - a6) * (
-                                                                     bv + (bt - bv) * a8) + a6 * (
-                                                                             br + (bq - br) * a8))
-                            bC = aT.rotationDeg + (aS.rotationDeg - aT.rotationDeg) * a9
-                            bB = bE.rotationDeg + (bD.rotationDeg - bE.rotationDeg) * a9
-                            bz = aN.rotationDeg + (aM.rotationDeg - aN.rotationDeg) * a9
-                            by = bp.rotationDeg + (bo.rotationDeg - bp.rotationDeg) * a9
-                            bv = bh.rotationDeg + (bg.rotationDeg - bh.rotationDeg) * a9
-                            bt = aY.rotationDeg + (aW.rotationDeg - aY.rotationDeg) * a9
-                            br = a7.rotationDeg + (a5.rotationDeg - a7.rotationDeg) * a9
-                            bq = aR.rotationDeg + (aQ.rotationDeg - aR.rotationDeg) * a9
-                            rctx.interpolatedAffine.rotationDeg = (1 - a4) * (
-                                    (1 - a6) * (bC + (bB - bC) * a8) + a6 * (bz + (by - bz) * a8)) + a4 * (
-                                                                          (1 - a6) * (
-                                                                          bv + (bt - bv) * a8) + a6 * (
-                                                                                  br + (bq - br) * a8))
+                        if pivotCount == 4:
+                            affine1 = self.affines[pivotIndices[0]]
+                            affine2 = self.affines[pivotIndices[1]]
+                            affine3 = self.affines[pivotIndices[2]]
+                            affine4 = self.affines[pivotIndices[3]]
+                            affine5 = self.affines[pivotIndices[4]]
+                            affine6 = self.affines[pivotIndices[5]]
+                            affine7 = self.affines[pivotIndices[6]]
+                            affine8 = self.affines[pivotIndices[7]]
+                            affine9 = self.affines[pivotIndices[8]]
+                            affine10 = self.affines[pivotIndices[9]]
+                            affine11 = self.affines[pivotIndices[10]]
+                            affine12 = self.affines[pivotIndices[11]]
+                            affine13 = self.affines[pivotIndices[12]]
+                            affine14 = self.affines[pivotIndices[13]]
+                            affine15 = self.affines[pivotIndices[14]]
+                            affine16 = self.affines[pivotIndices[15]]
+                            weight1 = pivotValues[0]
+                            weight2 = pivotValues[1]
+                            weight3 = pivotValues[2]
+                            weight4 = pivotValues[3]
+                            interpolated1X = affine1.originX + (affine2.originX - affine1.originX) * weight1
+                            interpolated2X = affine3.originX + (affine4.originX - affine3.originX) * weight1
+                            interpolated3X = affine5.originX + (affine6.originX - affine5.originX) * weight1
+                            interpolated4X = affine7.originX + (affine8.originX - affine7.originX) * weight1
+                            interpolated5X = affine9.originX + (affine10.originX - affine9.originX) * weight1
+                            interpolated6X = affine11.originX + (affine12.originX - affine11.originX) * weight1
+                            interpolated7X = affine13.originX + (affine14.originX - affine13.originX) * weight1
+                            interpolated8X = affine15.originX + (affine16.originX - affine15.originX) * weight1
+                            part1 = (1 - weight3) * (interpolated1X + (interpolated2X - interpolated1X) * weight2) + weight3 * (
+                                    interpolated3X + (interpolated4X - interpolated3X) * weight2)
+                            part2 = (1 - weight3) * (
+                                    interpolated5X + (interpolated6X - interpolated5X) * weight2) + weight3 * (
+                                            interpolated7X + (interpolated8X - interpolated7X) * weight2)
+                            rotationContext.interpolatedAffine.originX = (1 - weight4) * part1 + weight4 * part2
+                            interpolated1Y = affine1.originY + (affine2.originY - affine1.originY) * weight1
+                            interpolated2Y = affine3.originY + (affine4.originY - affine3.originY) * weight1
+                            interpolated3Y = affine5.originY + (affine6.originY - affine5.originY) * weight1
+                            interpolated4Y = affine7.originY + (affine8.originY - affine7.originY) * weight1
+                            interpolated5Y = affine9.originY + (affine10.originY - affine9.originY) * weight1
+                            interpolated6Y = affine11.originY + (affine12.originY - affine11.originY) * weight1
+                            interpolated7Y = affine13.originY + (affine14.originY - affine13.originY) * weight1
+                            interpolated8Y = affine15.originY + (affine16.originY - affine15.originY) * weight1
+                            part3 = (1 - weight3) * (interpolated1Y + (interpolated2Y - interpolated1Y) * weight2) + weight3 * (
+                                    interpolated3Y + (interpolated4Y - interpolated3Y) * weight2)
+                            part4 = (1 - weight3) * (
+                                    interpolated5Y + (interpolated6Y - interpolated5Y) * weight2) + weight3 * (
+                                            interpolated7Y + (interpolated8Y - interpolated7Y) * weight2)
+                            rotationContext.interpolatedAffine.originY = (1 - weight4) * part3 + weight4 * part4
+                            interpolated1ScaleX = affine1.scaleX + (affine2.scaleX - affine1.scaleX) * weight1
+                            interpolated2ScaleX = affine3.scaleX + (affine4.scaleX - affine3.scaleX) * weight1
+                            interpolated3ScaleX = affine5.scaleX + (affine6.scaleX - affine5.scaleX) * weight1
+                            interpolated4ScaleX = affine7.scaleX + (affine8.scaleX - affine7.scaleX) * weight1
+                            interpolated5ScaleX = affine9.scaleX + (affine10.scaleX - affine9.scaleX) * weight1
+                            interpolated6ScaleX = affine11.scaleX + (affine12.scaleX - affine11.scaleX) * weight1
+                            interpolated7ScaleX = affine13.scaleX + (affine14.scaleX - affine13.scaleX) * weight1
+                            interpolated8ScaleX = affine15.scaleX + (affine16.scaleX - affine15.scaleX) * weight1
+                            part5 = (1 - weight3) * (interpolated1ScaleX + (interpolated2ScaleX - interpolated1ScaleX) * weight2) + weight3 * (
+                                    interpolated3ScaleX + (interpolated4ScaleX - interpolated3ScaleX) * weight2)
+                            part6 = (1 - weight3) * (
+                                    interpolated5ScaleX + (interpolated6ScaleX - interpolated5ScaleX) * weight2) + weight3 * (
+                                            interpolated7ScaleX + (interpolated8ScaleX - interpolated7ScaleX) * weight2)
+                            rotationContext.interpolatedAffine.scaleX = (1 - weight4) * part5 + weight4 * part6
+                            interpolated1ScaleY = affine1.scaleY + (affine2.scaleY - affine1.scaleY) * weight1
+                            interpolated2ScaleY = affine3.scaleY + (affine4.scaleY - affine3.scaleY) * weight1
+                            interpolated3ScaleY = affine5.scaleY + (affine6.scaleY - affine5.scaleY) * weight1
+                            interpolated4ScaleY = affine7.scaleY + (affine8.scaleY - affine7.scaleY) * weight1
+                            interpolated5ScaleY = affine9.scaleY + (affine10.scaleY - affine9.scaleY) * weight1
+                            interpolated6ScaleY = affine11.scaleY + (affine12.scaleY - affine11.scaleY) * weight1
+                            interpolated7ScaleY = affine13.scaleY + (affine14.scaleY - affine13.scaleY) * weight1
+                            interpolated8ScaleY = affine15.scaleY + (affine16.scaleY - affine15.scaleY) * weight1
+                            part7 = (1 - weight3) * (interpolated1ScaleY + (interpolated2ScaleY - interpolated1ScaleY) * weight2) + weight3 * (
+                                    interpolated3ScaleY + (interpolated4ScaleY - interpolated3ScaleY) * weight2)
+                            part8 = (1 - weight3) * (
+                                    interpolated5ScaleY + (interpolated6ScaleY - interpolated5ScaleY) * weight2) + weight3 * (
+                                            interpolated7ScaleY + (interpolated8ScaleY - interpolated7ScaleY) * weight2)
+                            rotationContext.interpolatedAffine.scaleY = (1 - weight4) * part7 + weight4 * part8
+                            interpolated1Rotation = affine1.rotationDeg + (affine2.rotationDeg - affine1.rotationDeg) * weight1
+                            interpolated2Rotation = affine3.rotationDeg + (affine4.rotationDeg - affine3.rotationDeg) * weight1
+                            interpolated3Rotation = affine5.rotationDeg + (affine6.rotationDeg - affine5.rotationDeg) * weight1
+                            interpolated4Rotation = affine7.rotationDeg + (affine8.rotationDeg - affine7.rotationDeg) * weight1
+                            interpolated5Rotation = affine9.rotationDeg + (affine10.rotationDeg - affine9.rotationDeg) * weight1
+                            interpolated6Rotation = affine11.rotationDeg + (affine12.rotationDeg - affine11.rotationDeg) * weight1
+                            interpolated7Rotation = affine13.rotationDeg + (affine14.rotationDeg - affine13.rotationDeg) * weight1
+                            interpolated8Rotation = affine15.rotationDeg + (affine16.rotationDeg - affine15.rotationDeg) * weight1
+                            part9 = (1 - weight3) * (interpolated1Rotation + (interpolated2Rotation - interpolated1Rotation) * weight2) + weight3 * (
+                                    interpolated3Rotation + (interpolated4Rotation - interpolated3Rotation) * weight2)
+                            part10 = (1 - weight3) * (
+                                    interpolated5Rotation + (interpolated6Rotation - interpolated5Rotation) * weight2) + weight3 * (
+                                            interpolated7Rotation + (interpolated8Rotation - interpolated7Rotation) * weight2)
+                            rotationContext.interpolatedAffine.rotationDeg = (1 - weight4) * part9 + weight4 * part10
                         else:
-                            aV = int(pow(2, a2))
-                            aZ = Float32Array(aV)
-                            for bk in range(0, aV, 1):
-                                aI = bk
-                                aH = 1
-                                for aL in range(0, a2, 1):
-                                    aH *= (1 - ba[aL]) if (aI % 2 == 0) else ba[aL]
-                                    aI /= 2
+                            affineCount = int(pow(2, pivotCount))
+                            weights = Float32Array(affineCount)
+                            for i in range(0, affineCount, 1):
+                                index = i
+                                weight = 1
+                                for j in range(0, pivotCount, 1):
+                                    weight *= (1 - pivotValues[j]) if (index % 2 == 0) else pivotValues[j]
+                                    index //= 2
 
-                                aZ[bk] = aH
+                                weights[i] = weight
 
-                            bA = Array()
-                            for aU in range(0, aV, 1):
-                                bA[aU] = self.affines[a3[aU]]
+                            affines = Array()
+                            for i in range(0, affineCount, 1):
+                                affines[i] = self.affines[pivotIndices[i]]
 
-                            be = 0
-                            bc = 0
-                            bd = 0
-                            bb = 0
-                            aX = 0
-                            for aU in range(0, aV, 1):
-                                be += aZ[aU] * bA[aU].originX
-                                bc += aZ[aU] * bA[aU].originY
-                                bd += aZ[aU] * bA[aU].scaleX
-                                bb += aZ[aU] * bA[aU].scaleY
-                                aX += aZ[aU] * bA[aU].rotationDeg
+                            originX = 0
+                            originY = 0
+                            scaleX = 0
+                            scaleY = 0
+                            rotationDeg = 0
+                            for i in range(0, affineCount, 1):
+                                originX += weights[i] * affines[i].originX
+                                originY += weights[i] * affines[i].originY
+                                scaleX += weights[i] * affines[i].scaleX
+                                scaleY += weights[i] * affines[i].scaleY
+                                rotationDeg += weights[i] * affines[i].rotationDeg
 
-                            rctx.interpolatedAffine.originX = be
-                            rctx.interpolatedAffine.originY = bc
-                            rctx.interpolatedAffine.scaleX = bd
-                            rctx.interpolatedAffine.scaleY = bb
-                            rctx.interpolatedAffine.rotationDeg = aX
+                            rotationContext.interpolatedAffine.originX = originX
+                            rotationContext.interpolatedAffine.originY = originY
+                            rotationContext.interpolatedAffine.scaleX = scaleX
+                            rotationContext.interpolatedAffine.scaleY = scaleY
+                            rotationContext.interpolatedAffine.rotationDeg = rotationDeg
 
-        bn = self.affines[a3[0]]
-        rctx.interpolatedAffine.reflectX = bn.reflectX
-        rctx.interpolatedAffine.reflectY = bn.reflectY
+        affine = self.affines[pivotIndices[0]]
+        rotationContext.interpolatedAffine.reflectX = affine.reflectX
+        rotationContext.interpolatedAffine.reflectY = affine.reflectY
 
-    def setupTransform(self, mctx: 'ModelContext', rctx: 'RotationContext'):
-        if not (self == rctx.getDeformer()):
+    def setupTransform(self, modelContext: 'ModelContext', rotationContext: 'RotationContext'):
+        if not (self == rotationContext.getDeformer()):
             raise RuntimeError("Invalid Deformer")
 
-        rctx.setAvailable(True)
+        rotationContext.setAvailable(True)
         if not self.needTransform():
-            rctx.setTotalScale_notForClient(rctx.interpolatedAffine.scaleX)
-            rctx.setTotalOpacity(rctx.getInterpolatedOpacity())
+            rotationContext.setTotalScale_notForClient(rotationContext.interpolatedAffine.scaleX)
+            rotationContext.setTotalOpacity(rotationContext.getInterpolatedOpacity())
         else:
-            aT = self.getTargetId()
-            if rctx.tmpDeformerIndex == Deformer.DEFORMER_INDEX_NOT_INIT:
-                rctx.tmpDeformerIndex = mctx.getDeformerIndex(aT)
+            targetId = self.getTargetId()
+            if rotationContext.tmpDeformerIndex == Deformer.DEFORMER_INDEX_NOT_INIT:
+                rotationContext.tmpDeformerIndex = modelContext.getDeformerIndex(targetId)
 
-            if rctx.tmpDeformerIndex < 0:
+            if rotationContext.tmpDeformerIndex < 0:
                 print("deformer is not reachable")
-                rctx.setAvailable(False)
+                rotationContext.setAvailable(False)
             else:
-                deformer = mctx.getDeformer(rctx.tmpDeformerIndex)
+                deformer = modelContext.getDeformer(rotationContext.tmpDeformerIndex)
                 if deformer is not None:
-                    dctx = mctx.getDeformerContext(rctx.tmpDeformerIndex)
-                    aS = RotationDeformer.temp1
-                    aS[0] = rctx.interpolatedAffine.originX
-                    aS[1] = rctx.interpolatedAffine.originY
-                    aJ = RotationDeformer.temp2
-                    aJ[0] = 0
-                    aJ[1] = -0.1
-                    aO = dctx.getDeformer().getType()
-                    if aO == Deformer.TYPE_ROTATION:
-                        aJ[1] = -10
+                    deformerContext = modelContext.getDeformerContext(rotationContext.tmpDeformerIndex)
+                    originPoint = RotationDeformer.temp1
+                    originPoint[0] = rotationContext.interpolatedAffine.originX
+                    originPoint[1] = rotationContext.interpolatedAffine.originY
+                    directionVector = RotationDeformer.temp2
+                    directionVector[0] = 0
+                    directionVector[1] = -0.1
+                    deformerType = deformerContext.getDeformer().getType()
+                    if deformerType == Deformer.TYPE_ROTATION:
+                        directionVector[1] = -10
                     else:
-                        aJ[1] = -0.1
+                        directionVector[1] = -0.1
 
-                    aQ = RotationDeformer.temp3
-                    self.getDirectionOnDst(mctx, deformer, dctx, aS, aJ, aQ)
-                    aP = UtMath.getAngleNotAbs(aJ, aQ)
-                    deformer.transformPoints(mctx, dctx, aS, aS, 1, 0, 2)
-                    rctx.transformedAffine.originX = aS[0]
-                    rctx.transformedAffine.originY = aS[1]
-                    rctx.transformedAffine.scaleX = rctx.interpolatedAffine.scaleX
-                    rctx.transformedAffine.scaleY = rctx.interpolatedAffine.scaleY
-                    rctx.transformedAffine.rotationDeg = rctx.interpolatedAffine.rotationDeg - aP * UtMath.RAD_TO_DEG
-                    aK = dctx.getTotalScale()
-                    rctx.setTotalScale_notForClient(aK * rctx.transformedAffine.scaleX)
-                    aN = dctx.getTotalOpacity()
-                    rctx.setTotalOpacity(aN * rctx.getInterpolatedOpacity())
-                    rctx.transformedAffine.reflectX = rctx.interpolatedAffine.reflectX
-                    rctx.transformedAffine.reflectY = rctx.interpolatedAffine.reflectY
-                    rctx.setAvailable(dctx.isAvailable())
+                    transformedDirection = RotationDeformer.temp3
+                    self.getDirectionOnDst(modelContext, deformer, deformerContext, originPoint, directionVector, transformedDirection)
+                    angle = UtMath.getAngleNotAbs(directionVector, transformedDirection)
+                    deformer.transformPoints(modelContext, deformerContext, originPoint, originPoint, 1, 0, 2)
+                    rotationContext.transformedAffine.originX = originPoint[0]
+                    rotationContext.transformedAffine.originY = originPoint[1]
+                    rotationContext.transformedAffine.scaleX = rotationContext.interpolatedAffine.scaleX
+                    rotationContext.transformedAffine.scaleY = rotationContext.interpolatedAffine.scaleY
+                    rotationContext.transformedAffine.rotationDeg = rotationContext.interpolatedAffine.rotationDeg - angle * UtMath.RAD_TO_DEG
+                    totalScale = deformerContext.getTotalScale()
+                    rotationContext.setTotalScale_notForClient(totalScale * rotationContext.transformedAffine.scaleX)
+                    totalOpacity = deformerContext.getTotalOpacity()
+                    rotationContext.setTotalOpacity(totalOpacity * rotationContext.getInterpolatedOpacity())
+                    rotationContext.transformedAffine.reflectX = rotationContext.interpolatedAffine.reflectX
+                    rotationContext.transformedAffine.reflectY = rotationContext.interpolatedAffine.reflectY
+                    rotationContext.setAvailable(deformerContext.isAvailable())
                 else:
-                    rctx.setAvailable(False)
+                    rotationContext.setAvailable(False)
 
-    def transformPoints(self, mc: 'ModelContext', dc: 'RotationContext', srcPoints: List[float], dstPoints: List[float],
+    def transformPoints(self, modelContext: 'ModelContext', rotationContext: 'RotationContext', srcPoints: List[float], dstPoints: List[float],
                         numPoint: int, ptOffset: int, ptStep: int):
-        if not (self == dc.getDeformer()):
+        if not (self == rotationContext.getDeformer()):
             raise RuntimeError("context not match")
 
-        aH = dc
-        aU = aH.transformedAffine if aH.transformedAffine is not None else aH.interpolatedAffine
-        a0 = math.sin(UtMath.DEG_TO_RAD * aU.rotationDeg)
-        aP = math.cos(UtMath.DEG_TO_RAD * aU.rotationDeg)
-        a3 = aH.getTotalScale()
-        aW = -1 if aU.reflectX else 1
-        aV = -1 if aU.reflectY else 1
-        aS = aP * a3 * aW
-        aQ = -a0 * a3 * aV
-        a1 = a0 * a3 * aW
-        aZ = aP * a3 * aV
-        aY = aU.originX
-        aX = aU.originY
-        aI = numPoint * ptStep
-        for aK in range(ptOffset, aI, ptStep):
-            aN = srcPoints[aK]
-            aM = srcPoints[aK + 1]
-            dstPoints[aK] = aS * aN + aQ * aM + aY
-            dstPoints[aK + 1] = a1 * aN + aZ * aM + aX
+        affine = rotationContext.transformedAffine if rotationContext.transformedAffine is not None else rotationContext.interpolatedAffine
+        sinRotation = math.sin(UtMath.DEG_TO_RAD * affine.rotationDeg)
+        cosRotation = math.cos(UtMath.DEG_TO_RAD * affine.rotationDeg)
+        totalScale = rotationContext.getTotalScale()
+        reflectX = -1 if affine.reflectX else 1
+        reflectY = -1 if affine.reflectY else 1
+        scaleX = cosRotation * totalScale * reflectX
+        shearX = -sinRotation * totalScale * reflectY
+        shearY = sinRotation * totalScale * reflectX
+        scaleY = cosRotation * totalScale * reflectY
+        originX = affine.originX
+        originY = affine.originY
+        totalPoints = numPoint * ptStep
+        for i in range(ptOffset, totalPoints, ptStep):
+            x = srcPoints[i]
+            y = srcPoints[i + 1]
+            dstPoints[i] = scaleX * x + shearX * y + originX
+            dstPoints[i + 1] = shearY * x + scaleY * y + originY
 
     @staticmethod
-    def getDirectionOnDst(mdc: 'ModelContext', targetToDst: 'Deformer', targetToDstContext: 'DeformerContext', srcOrigin, srcDir, retDir):
-        if not (targetToDst == targetToDstContext.getDeformer()):
+    def getDirectionOnDst(modelContext: 'ModelContext', targetDeformer: 'Deformer', targetDeformerContext: 'DeformerContext', srcOrigin, srcDir, retDir):
+        if not (targetDeformer == targetDeformerContext.getDeformer()):
             raise RuntimeError("context not match")
 
-        aO = RotationDeformer.temp4
-        RotationDeformer.temp4[0] = srcOrigin[0]
-        RotationDeformer.temp4[1] = srcOrigin[1]
-        targetToDst.transformPoints(mdc, targetToDstContext, aO, aO, 1, 0, 2)
-        aL = RotationDeformer.temp5
-        aS = RotationDeformer.temp6
-        aN = 10
-        aJ = 1
-        for aM in range(0, aN, 1):
-            aS[0] = srcOrigin[0] + aJ * srcDir[0]
-            aS[1] = srcOrigin[1] + aJ * srcDir[1]
-            targetToDst.transformPoints(mdc, targetToDstContext, aS, aL, 1, 0, 2)
-            aL[0] -= aO[0]
-            aL[1] -= aO[1]
-            if aL[0] != 0 or aL[1] != 0:
-                retDir[0] = aL[0]
-                retDir[1] = aL[1]
+        transformedOrigin = RotationDeformer.temp4
+        transformedOrigin[0] = srcOrigin[0]
+        transformedOrigin[1] = srcOrigin[1]
+        targetDeformer.transformPoints(modelContext, targetDeformerContext, transformedOrigin, transformedOrigin, 1, 0, 2)
+        transformedPoint = RotationDeformer.temp5
+        testPoint = RotationDeformer.temp6
+        maxIterations = 10
+        stepSize = 1
+        for i in range(0, maxIterations, 1):
+            testPoint[0] = srcOrigin[0] + stepSize * srcDir[0]
+            testPoint[1] = srcOrigin[1] + stepSize * srcDir[1]
+            targetDeformer.transformPoints(modelContext, targetDeformerContext, testPoint, transformedPoint, 1, 0, 2)
+            transformedPoint[0] -= transformedOrigin[0]
+            transformedPoint[1] -= transformedOrigin[1]
+            if transformedPoint[0] != 0 or transformedPoint[1] != 0:
+                retDir[0] = transformedPoint[0]
+                retDir[1] = transformedPoint[1]
                 return
 
-            aS[0] = srcOrigin[0] - aJ * srcDir[0]
-            aS[1] = srcOrigin[1] - aJ * srcDir[1]
-            targetToDst.transformPoints(mdc, targetToDstContext, aS, aL, 1, 0, 2)
-            aL[0] -= aO[0]
-            aL[1] -= aO[1]
-            if aL[0] != 0 or aL[1] != 0:
-                aL[0] = -aL[0]
-                aL[0] = -aL[0]
-                retDir[0] = aL[0]
-                retDir[1] = aL[1]
+            testPoint[0] = srcOrigin[0] - stepSize * srcDir[0]
+            testPoint[1] = srcOrigin[1] - stepSize * srcDir[1]
+            targetDeformer.transformPoints(modelContext, targetDeformerContext, testPoint, transformedPoint, 1, 0, 2)
+            transformedPoint[0] -= transformedOrigin[0]
+            transformedPoint[1] -= transformedOrigin[1]
+            if transformedPoint[0] != 0 or transformedPoint[1] != 0:
+                transformedPoint[0] = -transformedPoint[0]
+                transformedPoint[1] = -transformedPoint[1]
+                retDir[0] = transformedPoint[0]
+                retDir[1] = transformedPoint[1]
                 return
 
-            aJ *= 0.1
-
+            stepSize *= 0.1
 
         print("Invalid state\n")
 

@@ -1,4 +1,4 @@
-﻿import math
+import math
 
 from ..type import Array
 from ..util import UtMath
@@ -19,28 +19,27 @@ class PhysicsHair:
     def __init__(self):
         self.p1 = PhysicsPoint()
         self.p2 = PhysicsPoint()
-        self.Fo_ = 0
-        self.Db_ = 0
-        self.L2_ = 0
-        self.M2_ = 0
-        self.ks_ = 0
-        self._9b = 0
-        self.iP_ = 0
-        self.iT_ = 0
-        self.lL_ = Array()
-        self.qP_ = Array()
+        self.length = 0
+        self.angle = 0
+        self.stiffness = 0
+        self.lastAngle = 0
+        self.currentAngle = 0
+        self.angleVelocity = 0
+        self.lastTime = 0
+        self.currentTime = 0
+        self.sourceParams = Array()
+        self.targetParams = Array()
         self.setup(0.3, 0.5, 0.1)
 
     def setup(self, length=None, stiffness=None, mass=None):
-        self.ks_ = self.calcAngle()
+        self.currentAngle = self.calcAngle()
         self.p2.setupLast()
         if mass is not None:
-            self.Fo_ = length
-            self.L2_ = stiffness
+            self.length = length
+            self.stiffness = stiffness
             self.p1.mass = mass
             self.p2.mass = mass
             self.p2.y = length
-            self.setup()
 
     def getPhysicsPoint1(self):
         return self.p1
@@ -49,51 +48,51 @@ class PhysicsHair:
         return self.p2
 
     def getAngle(self):
-        return self.Db_
+        return self.angle
 
     def setAngle(self, angle):
-        self.Db_ = angle
+        self.angle = angle
 
     def getLastAngle(self):
-        return self.M2_
+        return self.lastAngle
 
     def getLastAngleVelocity(self):
-        return self._9b
+        return self.angleVelocity
 
     def calcAngle(self):
         return -180 * (math.atan2(self.p1.x - self.p2.x, -(self.p1.y - self.p2.y))) / math.pi
 
-    def addSrcParam(self, paramId, type, scale, weight):
-        srcParam = PhysicsSrc(paramId, type, scale, weight)
-        self.lL_.append(srcParam)
+    def addSrcParam(self, sourceType, paramId, scale, weight):
+        srcParam = PhysicsSrc(sourceType, paramId, scale, weight)
+        self.sourceParams.append(srcParam)
 
-    def addTargetParam(self, paramId, type, scale, weight):
-        targetParam = PhysicsTarget(paramId, type, scale, weight)
-        self.qP_.append(targetParam)
+    def addTargetParam(self, targetType, paramId, scale, weight):
+        targetParam = PhysicsTarget(targetType, paramId, scale, weight)
+        self.targetParams.append(targetParam)
 
     def update(self, model, timeMSec):
-        if self.iP_ == 0:
-            self.iP_ = self.iT_ = timeMSec
-            self.Fo_ = (math.sqrt((self.p1.x - self.p2.x) * (self.p1.x - self.p2.x) + (self.p1.y - self.p2.y) * (
+        if self.lastTime == 0:
+            self.lastTime = self.currentTime = timeMSec
+            self.length = (math.sqrt((self.p1.x - self.p2.x) * (self.p1.x - self.p2.x) + (self.p1.y - self.p2.y) * (
                     self.p1.y - self.p2.y)))
             return
 
-        deltaTime = (timeMSec - self.iT_) / 1000
+        deltaTime = (timeMSec - self.currentTime) / 1000
         if deltaTime != 0:
-            for i in range(len(self.lL_) - 1, 0 - 1, -1):
-                srcParam = self.lL_[i]
+            for i in range(len(self.sourceParams) - 1, 0 - 1, -1):
+                srcParam = self.sourceParams[i]
                 srcParam.update(model, self)
 
             self.updatePhysics(model, deltaTime)
-            self.M2_ = self.calcAngle()
-            self._9b = (self.M2_ - self.ks_) / deltaTime
-            self.ks_ = self.M2_
+            self.lastAngle = self.calcAngle()
+            self.angleVelocity = (self.lastAngle - self.currentAngle) / deltaTime
+            self.currentAngle = self.lastAngle
 
-        for i in range(len(self.qP_) - 1, 0 - 1, -1):
-            targetParam = self.qP_[i]
+        for i in range(len(self.targetParams) - 1, 0 - 1, -1):
+            targetParam = self.targetParams[i]
             targetParam.update(model, self)
 
-        self.iT_ = timeMSec
+        self.currentTime = timeMSec
 
     def updatePhysics(self, model, deltaTime):
         if deltaTime < 0.033:
@@ -111,14 +110,14 @@ class PhysicsHair:
         cosAngle = math.cos(angle)
         sinAngle = math.sin(angle)
         gravity = 9.8 * self.p2.mass
-        angleRad = (self.Db_ * UtMath.DEG_TO_RAD)
+        angleRad = (self.angle * UtMath.DEG_TO_RAD)
         forceGravity = (gravity * math.cos(angle - angleRad))
         forceX = (forceGravity * sinAngle)
         forceY = (forceGravity * cosAngle)
         forceDragX = (-self.p1.fx * sinAngle * sinAngle)
         forceDragY = (-self.p1.fy * sinAngle * cosAngle)
-        forceStiffnessX = (-self.p2.vx * self.L2_)
-        forceStiffnessY = (-self.p2.vy * self.L2_)
+        forceStiffnessX = (-self.p2.vx * self.stiffness)
+        forceStiffnessY = (-self.p2.vy * self.stiffness)
         self.p2.fx = (forceX + forceDragX + forceStiffnessX)
         self.p2.fy = (forceY + forceDragY + forceStiffnessY)
         self.p2.ax = self.p2.fx / self.p2.mass
@@ -129,8 +128,8 @@ class PhysicsHair:
         self.p2.y += self.p2.vy * deltaTime
         distance = (math.sqrt(
             (self.p1.x - self.p2.x) * (self.p1.x - self.p2.x) + (self.p1.y - self.p2.y) * (self.p1.y - self.p2.y)))
-        self.p2.x = self.p1.x + self.Fo_ * (self.p2.x - self.p1.x) / distance
-        self.p2.y = self.p1.y + self.Fo_ * (self.p2.y - self.p1.y) / distance
+        self.p2.x = self.p1.x + self.length * (self.p2.x - self.p1.x) / distance
+        self.p2.y = self.p1.y + self.length * (self.p2.y - self.p1.y) / distance
         self.p2.vx = (self.p2.x - self.p2.lastX) * invTime
         self.p2.vy = (self.p2.y - self.p2.lastY) * invTime
         self.p2.setupLast()

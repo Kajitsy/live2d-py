@@ -4,12 +4,12 @@ from .iphysics_param import IPhysicsParam
 
 class PhysicsTarget(IPhysicsParam):
 
-    def __init__(self, scale, aK, paramId, weight):
-        super().__init__(aK, paramId, weight)
-        self.YP_ = scale
+    def __init__(self, targetType, paramId, scale, weight):
+        super().__init__(paramId, scale, weight)
+        self.targetType = targetType
 
-    def update(self, aI, aH):
-        if self.YP_ == TARGET_FROM_ANGLE:
-            aI.setParamFloat(self.paramId, self.scale * aH.getLastAngle(), self.weight)
-        elif self.YP_ == TARGET_FROM_ANGLE_V:
-            aI.setParamFloat(self.paramId, self.scale * aH.getLastAngleVelocity(), self.weight)
+    def update(self, model, physicsContext):
+        if self.targetType == TARGET_FROM_ANGLE:
+            model.setParamFloat(self.paramId, self.scale * physicsContext.getLastAngle(), self.weight)
+        elif self.targetType == TARGET_FROM_ANGLE_V:
+            model.setParamFloat(self.paramId, self.scale * physicsContext.getLastAngleVelocity(), self.weight)
