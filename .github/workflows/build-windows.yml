@@ -1,7 +1,8 @@
 ﻿name: Windows-intel📦
 
 on:
-  push:
+ workflow_dispatch:
+ push:
     tags:
       - "v*.*.*"
     branches: [ windows-workflow, build-all ]
