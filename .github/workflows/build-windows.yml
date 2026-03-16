@@ -5,6 +5,7 @@ on:
     tags:
       - "v*.*.*"
     branches: [ windows-workflow, build-all ]
+  workflow_dispatch:
 
 
 jobs:
